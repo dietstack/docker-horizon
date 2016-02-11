@@ -4,6 +4,7 @@ MAINTAINER Kamil Madac (kamil.madac@t-systems.sk)
 
 ENV http_proxy="http://172.27.10.114:3128"
 ENV https_proxy="http://172.27.10.114:3128"
+ENV no_proxy="localhost,127.0.0.1"
 
 # Source codes to download
 ENV horizon_repo="https://github.com/openstack/horizon"
@@ -36,15 +37,19 @@ RUN cd horizon; pip install -r requirements.txt; pip install supervisor mysql-py
 # prepare directories for supervisor
 RUN mkdir -p /etc/supervisord /var/log/supervisord
 
+# copy horizon config file
+COPY configs/horizon/local_settings.py /horizon/openstack_dashboard/local/local_settings.py
+
 # prepare necessary stuff
+# http://docs.openstack.org/developer/horizon/topics/install.html
 RUN rm /etc/nginx/sites-enabled/default; \
     mkdir -p /var/log/nginx/horizon && \
     useradd -M -s /sbin/nologin horizon && \
     usermod -G www-data horizon && \
-    mkdir -p /run/uwsgi/ && chown horizon:horizon /run/uwsgi && chmod 775 /run/uwsgi
-
-# copy horizon configs
-COPY configs/horizon/* /etc/horizon/
+    mkdir -p /run/uwsgi/ && chown horizon:horizon /run/uwsgi && chmod 775 /run/uwsgi; \
+    /horizon/manage.py collectstatic --noinput; /horizon/manage.py make_web_conf --wsgi; \
+    chown -R horizon:horizon /horizon/openstack_dashboard/local; \
+    chown -R horizon:horizon /horizon/static
 
 # copy supervisor config
 COPY configs/supervisord/supervisord.conf /etc
@@ -70,5 +75,5 @@ RUN chmod +x /app/*
 #ENTRYPOINT ["/app/entrypoint.sh"]
 
 # Define default command.
-CMD ["/usr/local/bin/supervisord", "-c", "/etc/supervisord.conf"]
+#CMD ["/usr/local/bin/supervisord", "-c", "/etc/supervisord.conf"]
 
