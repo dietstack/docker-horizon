@@ -1,8 +1,6 @@
 #!/bin/bash
 set -e
 
-exit 0
-
 # set debug
 [[ $DEBUG ]] && set -x
 
@@ -25,9 +23,6 @@ if [[ -f "$OVERRIDE_DIR/$CONF_FILE" ]]; then
         OVERRIDE=1
         rm -f "$CONF_DIR/$CONF_FILE"
         ln -s "$OVERRIDE_DIR/$CONF_FILE" "$CONF_DIR/$CONF_FILE"
-fi
-
-if [[ $OVERRIDE -eq 0 ]]; then
 fi
 
 echo "$LOG_MESSAGE starting horizon"

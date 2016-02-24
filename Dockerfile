@@ -72,8 +72,8 @@ COPY scripts /app
 WORKDIR /app
 RUN chmod +x /app/*
 
-#ENTRYPOINT ["/app/entrypoint.sh"]
+ENTRYPOINT ["/app/entrypoint.sh"]
 
 # Define default command.
-#CMD ["/usr/local/bin/supervisord", "-c", "/etc/supervisord.conf"]
+CMD ["/usr/local/bin/supervisord", "-c", "/etc/supervisord.conf"]
 
