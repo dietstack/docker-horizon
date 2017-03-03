@@ -2,7 +2,11 @@
 set -e
 
 # set debug
-[[ $DEBUG ]] && set -x
+DEBUG_OPT=false
+if [[ $DEBUG ]]; then
+        set -x
+        DEBUG_OPT=True
+fi
 
 # if horizon is not installed, quit
 #which horizon-all &>/dev/null || exit 1
@@ -10,20 +14,38 @@ set -e
 # define variable defaults
 
 LOG_MESSAGE="Docker start script:"
-OVERRIDE=0
-CONF_DIR="/horizon/openstack_dashboard"
+CONF_DIR="/horizon/openstack_dashboard/local"
 OVERRIDE_DIR="/horizon-override"
-CONF_FILE="local_settings.py"
+CONF_FILES="local_settings.py"
 
+TIME_ZONE=${TIME_ZONE:-'Europe\/Bratislava'}
+KEYSTONE_HOST=${KEYSTONE_HOST:-127.0.0.1}
+MEMCACHED_SERVERS=${MEMCACHED_SERVERS:-127.0.0.1:11211}
+MULTIDOMAIN=${MULTIDOMAIN:-False}
+HORIZON_HTTP_PORT=${HORIZON_HTTP_PORT:-80}
 
-# check if external config is provided
-echo "$LOG_MESSAGE Checking if external config is provided.."
-if [[ -f "$OVERRIDE_DIR/$CONF_FILE" ]]; then
-        echo "$LOG_MESSAGE  ==> external config found!. Using it."
-        OVERRIDE=1
-        rm -f "$CONF_DIR/$CONF_FILE"
-        ln -s "$OVERRIDE_DIR/$CONF_FILE" "$CONF_DIR/$CONF_FILE"
-fi
+for CONF in ${CONF_FILES[*]}; do
+       echo "$LOG_MESSAGE generating $CONF file ..."
+       sed -i "s/\b_DEBUG_OPT_\b/$DEBUG_OPT/" $CONF_DIR/$CONF
+       sed -i "s/\b_KEYSTONE_HOST_\b/$KEYSTONE_HOST/" $CONF_DIR/$CONF
+       sed -i "s/\b_MEMCACHED_SERVERS_\b/$MEMCACHED_SERVERS/" $CONF_DIR/$CONF
+       sed -i "s/\b_TIME_ZONE_\b/$TIME_ZONE/" $CONF_DIR/$CONF
+       sed -i "s/\b_MULTIDOMAIN_\b/$MULTIDOMAIN/" $CONF_DIR/$CONF
+done
+echo "$LOG_MESSAGE  ==> done"
+
+# we need to change owner of local_settings.py config file
+# because uwsgi is running under horizon user
+chown horizon:horizon $CONF_DIR/local_settings.py
+
+# configure port where horizon will listen
+sed -i "s/\b_HORIZON_HTTP_PORT_\b/$HORIZON_HTTP_PORT/" /etc/nginx/sites-enabled/horizon.conf
+
+# configure wsgi file for uwsgi server
+# (kmadac )it used to be in Dockerfile, but I had to move it 
+# after variables replacement local_settings.py because manage.py
+# raised exception
+/horizon/manage.py make_web_conf --wsgi --force;
 
 echo "$LOG_MESSAGE starting horizon"
 exec "$@"
