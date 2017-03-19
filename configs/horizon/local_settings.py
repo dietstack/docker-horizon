@@ -2,6 +2,9 @@ import os
 
 from django.utils.translation import ugettext_lazy as _
 
+# pgettext_lazy is needed for AVAILABLE_THEMES list
+from django.utils.translation import pgettext_lazy
+
 from horizon.utils import secret_key
 
 from openstack_dashboard import exceptions
@@ -670,3 +673,15 @@ REST_API_REQUIRED_SETTINGS = ['OPENSTACK_HYPERVISOR_FEATURES',
 #Enables upload from remote location
 IMAGES_ALLOW_LOCATION = True
 
+# Add our theme
+AVAILABLE_THEMES = [
+    (
+        'default',
+        pgettext_lazy('Default style theme', 'Default'),
+        'themes/default'
+    ), (
+        'testlab',
+        pgettext_lazy("TestLab theme", "TestLab"),
+        'themes/testlab'
+    ),
+]

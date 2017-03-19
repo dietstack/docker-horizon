@@ -2,8 +2,6 @@ FROM osmaster
 
 MAINTAINER Kamil Madac (kamil.madac@t-systems.sk)
 
-ENV http_proxy="http://172.27.10.114:3128" https_proxy="http://172.27.10.114:3128" no_proxy="localhost,127.0.0.1"
-
 # Source codes to download
 ENV repo="https://github.com/openstack/horizon" branch="stable/newton" commit=""
 
@@ -30,8 +28,12 @@ RUN cd horizon; pip install -r requirements.txt -c /requirements/upper-constrain
     pip install supervisor python-memcached; \
     python setup.py install
 
-# prepare directories for supervisor
+# prepare directories
 RUN mkdir -p /etc/supervisord /var/log/supervisord
+
+# copy horizon config file
+COPY configs/horizon/local_settings.py /horizon/openstack_dashboard/local/local_settings.py
+COPY themes/testlab/ /horizon/openstack_dashboard/themes/testlab/
 
 # prepare necessary stuff
 # http://docs.openstack.org/developer/horizon/topics/install.html
@@ -40,12 +42,9 @@ RUN rm /etc/nginx/sites-enabled/default; \
     useradd -M -s /sbin/nologin horizon && \
     usermod -G www-data horizon && \
     mkdir -p /run/uwsgi/ && chown horizon:horizon /run/uwsgi && chmod 775 /run/uwsgi; \
-    /horizon/manage.py collectstatic --noinput; \
-    chown -R horizon:horizon /horizon/openstack_dashboard/local; \
-    chown -R horizon:horizon /horizon/static
-
-# copy horizon config file
-COPY configs/horizon/local_settings.py /horizon/openstack_dashboard/local/local_settings.py
+    chown -R horizon:www-data /horizon/openstack_dashboard/local; \
+    chown -R horizon:www-data /horizon/openstack_dashboard/themes; \
+    mkdir -p /horizon/static && chown -R horizon:horizon /horizon/static
 
 # copy supervisor config
 COPY configs/supervisord/supervisord.conf /etc

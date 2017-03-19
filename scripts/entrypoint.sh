@@ -2,7 +2,7 @@
 set -e
 
 # set debug
-DEBUG_OPT=false
+DEBUG_OPT=False
 if [[ $DEBUG ]]; then
         set -x
         DEBUG_OPT=True
@@ -42,10 +42,13 @@ chown horizon:horizon $CONF_DIR/local_settings.py
 sed -i "s/\b_HORIZON_HTTP_PORT_\b/$HORIZON_HTTP_PORT/" /etc/nginx/sites-enabled/horizon.conf
 
 # configure wsgi file for uwsgi server
-# (kmadac )it used to be in Dockerfile, but I had to move it 
+# (kmadac )it used to be in Dockerfile, but I had to move it
 # after variables replacement local_settings.py because manage.py
 # raised exception
 /horizon/manage.py make_web_conf --wsgi --force;
+
+# generate statics
+/horizon/manage.py collectstatic --noinput && chown -R horizon:www-data /horizon/openstack_dashboard/local /horizon/static;
 
 echo "$LOG_MESSAGE starting horizon"
 exec "$@"
