@@ -5,9 +5,10 @@ wait_for_port() {
     echo "Wait till app is bound to port $port "
     while [[ $counter -lt $timeout ]]; do
         local counter=$[counter + 1]
-        if [[ ! `ss -ntl4 | grep ":${port}"` ]]; then
+        if [[ ! `ss -ntl | grep ":${port}"` ]]; then
             echo -n ". "
         else
+            echo ""
             break
         fi
         sleep 1
@@ -26,7 +27,7 @@ get_docker_image_from_release() {
     local reqversion=$3
 
     local version=${reqversion}
-    if [[ "${reqversion}" -eq "latest" ]]; then
+    if [[ "${reqversion}" == "latest" ]]; then
         local version=$(wget --timeout=5 --tries=1 -q -O - ${http_image_repo_url}/latest_tag.txt)
         echo "Remote latest version is ${version}."
     fi
@@ -61,7 +62,7 @@ get_docker_image_from_release() {
         else
             echo "Docker image ${image_name}:${version} found in local repository."
         fi
-        dimage=$(docker images | grep ${image_name} | grep ${version} | awk '{print $1}')
+        dimage=$(docker images | grep ${image_name} | grep ${version} | head -n 1 | awk '{print $1}')
         docker tag ${dimage}:${version} ${image_name}:latest
     fi
 }
@@ -75,7 +76,7 @@ create_db_osadmin() {
     local ROOT_DB_PASSWD=$3
     local SVC_DB_PASSWD=$4
     echo "Creating $DB_NAME database ..."
-    MYSQL_CMD="docker run --net=host osadmin mysql -h 127.0.0.1 -P 3306 -u root -p$ROOT_DB_PASSWD"
+    MYSQL_CMD="docker run --rm --net=host osadmin mysql -h 127.0.0.1 -P 3306 -u root -p$ROOT_DB_PASSWD"
     $MYSQL_CMD -e "CREATE DATABASE $DB_NAME;"
     $MYSQL_CMD -e "CREATE USER '$USER_NAME'@'%' IDENTIFIED BY '$SVC_DB_PASSWD';"
     $MYSQL_CMD -e "GRANT ALL PRIVILEGES ON $DB_NAME.* TO '$USER_NAME'@'%' WITH GRANT OPTION;"
