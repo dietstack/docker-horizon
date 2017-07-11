@@ -2,6 +2,7 @@ FROM osmaster
 MAINTAINER Kamil Madac (kamil.madac@t-systems.sk)
 
 # Source codes to download
+ENV srv_name=horizon
 ENV repo="https://github.com/openstack/horizon" branch="stable/newton" commit="bd8b21b"
 
 # nginx is webserver and gettext is needed for horizon internationalization
