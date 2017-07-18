@@ -24,6 +24,17 @@ MEMCACHED_SERVERS=${MEMCACHED_SERVERS:-127.0.0.1:11211}
 MULTIDOMAIN=${MULTIDOMAIN:-False}
 HORIZON_HTTP_PORT=${HORIZON_HTTP_PORT:-80}
 
+# check if external configs are provided
+echo "$LOG_MESSAGE Checking if external config is provided.."
+if [[ "$(ls -A $OVERRIDE_DIR)" ]]; then
+        echo "$LOG_MESSAGE  ==> external config found!. Using it."
+        OVERRIDE=1
+        for CONF in ${OVERRIDE_CONF_FILES[*]}; do
+                rm -f "$CONF_DIR/$CONF"
+                ln -s "$OVERRIDE_DIR/$CONF" "$CONF_DIR/$CONF"
+        done
+fi
+
 for CONF in ${CONF_FILES[*]}; do
        echo "$LOG_MESSAGE generating $CONF file ..."
        sed -i "s/\b_DEBUG_OPT_\b/$DEBUG_OPT/" $CONF_DIR/$CONF
