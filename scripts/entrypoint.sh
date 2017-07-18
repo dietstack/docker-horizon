@@ -29,7 +29,7 @@ echo "$LOG_MESSAGE Checking if external config is provided.."
 if [[ "$(ls -A $OVERRIDE_DIR)" ]]; then
         echo "$LOG_MESSAGE  ==> external config found!. Using it."
         OVERRIDE=1
-        for CONF in ${OVERRIDE_CONF_FILES[*]}; do
+        for CONF in ${CONF_FILES[*]}; do
                 rm -f "$CONF_DIR/$CONF"
                 ln -s "$OVERRIDE_DIR/$CONF" "$CONF_DIR/$CONF"
         done
