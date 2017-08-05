@@ -1,11 +1,9 @@
 #!/bin/bash
 # Placeholder for test script
 
-GIT_REPO=172.27.10.10
-RELEASE_REPO=172.27.9.130
+DOCKER_PROJ_NAME=${DOCKER_PROJ_NAME:-''}
 CONT_PREFIX=test
 PORT=8082
-BRANCH=master
 
 . lib/functions.sh
 
@@ -37,9 +35,6 @@ wait_for_horizon() {
 
 cleanup
 
-# pull osmaster docker image
-get_docker_image_from_release osmaster http://${RELEASE_REPO}/docker-osmaster/${BRANCH} latest
-
 ./build.sh
 
 echo "Starting horizon container ..."
@@ -47,7 +42,7 @@ docker run -d --net=host \
            -e DEBUG="true" \
            -e HORIZON_HTTP_PORT=$PORT \
            --name ${CONT_PREFIX}_horizon \
-           horizon:latest
+           ${DOCKER_PROJ_NAME}horizon:latest
 
 wait_for_horizon 120
 

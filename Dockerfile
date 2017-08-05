@@ -1,32 +1,48 @@
-FROM osmaster
-MAINTAINER Kamil Madac (kamil.madac@t-systems.sk)
-
-# Source codes to download
-ENV srv_name=horizon
-ENV repo="https://github.com/openstack/horizon" branch="stable/newton" commit="bd8b21b"
-
-# nginx is webserver and gettext is needed for horizon internationalization
-RUN apt-get update; apt-get install -y nginx nginx-doc gettext && \
-    rm /etc/nginx/sites-enabled/default && \
-    pip install uwsgi
-
-# Download source codes
-RUN if [ -n $commit ]; then \
-       git clone $repo --single-branch --branch $branch; \
-       cd $srv_name && git checkout $commit; \
-    else \
-       git clone $repo --single-branch --depth=1 --branch $branch; \
-    fi
+FROM debian:stretch-slim
+MAINTAINER Kamil Madac (kamil.madac@gmail.com)
 
 # Apply source code patches
 RUN mkdir -p /patches
 COPY patches/* /patches/
-RUN /patches/patch.sh
 
-# Install horizon with dependencies
-RUN cd horizon; pip install -r requirements.txt -c /requirements/upper-constraints.txt; \
-    pip install supervisor python-memcached; \
-    python setup.py install
+RUN echo 'APT::Install-Recommends "false";' >> /etc/apt/apt.conf && \
+    echo 'APT::Get::Install-Suggests "false";' >> /etc/apt/apt.conf && \
+    apt update; apt install -y ca-certificates wget python libpython2.7 libxml2-dev nginx gettext && \
+    update-ca-certificates; \
+    wget --no-check-certificate https://bootstrap.pypa.io/get-pip.py; \
+    python get-pip.py; \
+    rm get-pip.py; \
+    wget https://raw.githubusercontent.com/openstack/requirements/stable/newton/upper-constraints.txt -P /app && \
+    /patches/stretch-crypto.sh && \
+    apt-get clean && apt autoremove && \
+    rm -rf /var/lib/apt/lists/*; rm -rf /root/.cache
+
+# Source codes to download
+ENV SVC_NAME=horizon
+ENV REPO="https://github.com/openstack/horizon" BRANCH="stable/newton" COMMIT="596ab88df9a"
+
+# Install nova with dependencies
+ENV BUILD_PACKAGES="git build-essential libssl-dev libffi-dev python-dev"
+
+RUN apt update; apt install -y $BUILD_PACKAGES && \
+    if [ -z $REPO ]; then \
+      echo "Sources fetching from releases $RELEASE_URL"; \
+      wget $RELEASE_URL && tar xvfz $SVC_VERSION.tar.gz -C / && mv $(ls -1d $SVC_NAME*) $SVC_NAME && \
+      cd /$SVC_NAME && pip install -r requirements.txt -c /app/upper-constraints.txt && PBR_VERSION=$SVC_VERSION python setup.py install; \
+    else \
+      if [ -n $COMMIT ]; then \
+        cd /; git clone $REPO --single-branch --branch $BRANCH; \
+        cd /$SVC_NAME && git checkout $COMMIT; \
+      else \
+        git clone $REPO --single-branch --depth=1 --branch $BRANCH; \
+      fi; \
+      cd /$SVC_NAME; pip install -r requirements.txt -c /app/upper-constraints.txt && python setup.py install && \
+      rm -rf /$SVC_NAME/.git; \
+    fi; \
+    pip install supervisor uwsgi python-memcached && \
+    apt remove -y --auto-remove $BUILD_PACKAGES &&  \
+    apt-get clean && apt autoremove && \
+    rm -rf /var/lib/apt/lists/* && rm -rf /root/.cache
 
 # prepare directories
 RUN mkdir -p /etc/supervisord /var/log/supervisord
@@ -76,4 +92,3 @@ ENTRYPOINT ["/app/entrypoint.sh"]
 
 # Define default command.
 CMD ["/usr/local/bin/supervisord", "-c", "/etc/supervisord.conf"]
-
