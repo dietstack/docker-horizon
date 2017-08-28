@@ -49,7 +49,7 @@ RUN mkdir -p /etc/supervisord /var/log/supervisord
 
 # copy horizon config file
 COPY configs/horizon/local_settings.py /horizon/openstack_dashboard/local/local_settings.py
-COPY themes/testlab/ /horizon/openstack_dashboard/themes/testlab/
+COPY themes/ /horizon/openstack_dashboard/themes/
 
 # prepare necessary stuff
 # http://docs.openstack.org/developer/horizon/topics/install.html
