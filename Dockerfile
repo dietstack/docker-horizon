@@ -50,6 +50,7 @@ RUN mkdir -p /etc/supervisord /var/log/supervisord
 # copy horizon config file
 COPY configs/horizon/local_settings.py /horizon/openstack_dashboard/local/local_settings.py
 COPY themes/ /horizon/openstack_dashboard/themes/
+COPY files/logo-splash.png files/favicon.ico /horizon/openstack_dashboard/static/dashboard/img/
 
 # prepare necessary stuff
 # http://docs.openstack.org/developer/horizon/topics/install.html
@@ -82,11 +83,6 @@ COPY scripts /app
 # Define workdir
 WORKDIR /app
 RUN chmod +x /app/*
-
-# some cleanup
-RUN apt-get clean && \
-    rm -rf /var/lib/apt/lists/*; \
-    rm -rf /root/.cache/*
 
 ENTRYPOINT ["/app/entrypoint.sh"]
 

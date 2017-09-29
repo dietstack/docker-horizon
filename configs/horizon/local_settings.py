@@ -673,15 +673,18 @@ REST_API_REQUIRED_SETTINGS = ['OPENSTACK_HYPERVISOR_FEATURES',
 #Enables upload from remote location
 IMAGES_ALLOW_LOCATION = True
 
-# Add our theme
-AVAILABLE_THEMES = [
-    (
-        'default',
-        pgettext_lazy('Default style theme', 'Default'),
-        'themes/default'
-    ), (
-        'testlab',
-        pgettext_lazy("TestLab theme", "TestLab"),
-        'themes/testlab'
-    ),
-]
+# Add our themes
+
+path = '/horizon/openstack_dashboard/themes/'
+dirs = (file for file in os.listdir(path)
+       if os.path.isdir(os.path.join(path, file)))
+
+AVAILABLE_THEMES = [ (os.path.basename(d),
+                      pgettext_lazy('%s theme' % os.path.basename(d).title(), os.path.basename(d).title()),
+                      'themes/%s' % os.path.basename(d)) for d in dirs ]
+
+if 'dietstack' in dirs:
+    DEFAULT_THEME = 'dietstack'
+else:
+    DEFAULT_THEME = 'default'
+
