@@ -670,8 +670,8 @@ REST_API_REQUIRED_SETTINGS = ['OPENSTACK_HYPERVISOR_FEATURES',
 # http://tinyurl.com/anticlickjack
 #DISALLOW_IFRAME_EMBED = True
 
-#Enables upload from remote location
-IMAGES_ALLOW_LOCATION = True
+#Enables/disables upload from remote location
+IMAGES_ALLOW_LOCATION = False
 
 # Add our themes
 
