@@ -18,8 +18,9 @@ RUN echo 'APT::Install-Recommends "false";' >> /etc/apt/apt.conf && \
     rm -rf /var/lib/apt/lists/*; rm -rf /root/.cache
 
 # Source codes to download
-ENV SVC_NAME=horizon
-ENV REPO="https://github.com/openstack/horizon" BRANCH="stable/newton" COMMIT="596ab88df9a"
+ENV SVC_NAME=horizon SVC_VERSION=10.0.5
+#ENV REPO="https://github.com/openstack/horizon" BRANCH="stable/newton" COMMIT="596ab88df9a"
+ENV RELEASE_URL=https://github.com/openstack/$SVC_NAME/archive/$SVC_VERSION.tar.gz
 
 # Install nova with dependencies
 ENV BUILD_PACKAGES="git build-essential libssl-dev libffi-dev python-dev"
