@@ -16,7 +16,7 @@ cleanup() {
 wait_for_horizon() {
     local timeout=$1
     local counter=0
-    echo "Wait till horizon login responsds with 200 code ..."
+    echo "Wait till horizon login responds with 200 code ..."
     while [[ $counter -lt $timeout ]]; do
         local counter=$[counter + 5]
         local OUT=$(curl -s -L -w '%{http_code}' http://127.0.0.1:$PORT | tail -n 1)

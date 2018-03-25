@@ -30,7 +30,7 @@ WEBROOT = '/'
 # with the list of host/domain names that the application can serve.
 # For more information see:
 # https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
-#ALLOWED_HOSTS = ['horizon.example.com', ]
+ALLOWED_HOSTS = ['_JUST_EXTERNAL_IP_', ]
 
 # Set SSL proxy settings:
 # For Django 1.4+ pass this header from the proxy after terminating the SSL,
@@ -55,7 +55,9 @@ WEBROOT = '/'
 OPENSTACK_API_VERSIONS = {
     "data-processing": 1.1,
     "identity": 3,
+    "image": 2,
     "volume": 2,
+    "compute": 2,
 }
 
 # Set this to True if running on multi-domain model. When this is enabled, it
@@ -70,6 +72,11 @@ OPENSTACK_KEYSTONE_DEFAULT_DOMAIN = 'default'
 # valid options are "AUTO"(default), "VNC", "SPICE", "RDP", "SERIAL" or None
 # Set to None explicitly if you want to deactivate the console.
 #CONSOLE_TYPE = "AUTO"
+
+# If provided, a "Report Bug" link will be displayed in the site header
+# which links to the value of this setting (ideally a URL containing
+# information on how to report issues).
+HORIZON_CONFIG["bug_url"] = "https://github.com/dietstack/dietstack/issues"
 
 # Show backdrop element outside the modal, do not close the modal
 # after clicking on backdrop.
@@ -224,41 +231,58 @@ OPENSTACK_NEUTRON_NETWORK = {
     'enable_ipv6': True,
     'enable_distributed_router': False,
     'enable_ha_router': False,
-    'enable_lb': True,
-    'enable_firewall': True,
-    'enable_vpn': True,
     'enable_fip_topology_check': True,
 
-    # Neutron can be configured with a default Subnet Pool to be used for IPv4
-    # subnet-allocation. Specify the label you wish to display in the Address
-    # pool selector on the create subnet step if you want to use this feature.
-    'default_ipv4_subnet_pool_label': None,
-
-    # Neutron can be configured with a default Subnet Pool to be used for IPv6
-    # subnet-allocation. Specify the label you wish to display in the Address
-    # pool selector on the create subnet step if you want to use this feature.
-    # You must set this to enable IPv6 Prefix Delegation in a PD-capable
-    # environment.
-    'default_ipv6_subnet_pool_label': None,
-
-    # The profile_support option is used to detect if an external router can be
-    # configured via the dashboard. When using specific plugins the
-    # profile_support can be turned on if needed.
-    'profile_support': None,
-    #'profile_support': 'cisco',
+    # Default dns servers you would like to use when a subnet is
+    # created.  This is only a default, users can still choose a different
+    # list of dns servers when creating a new subnet.
+    # The entries below are examples only, and are not appropriate for
+    # real deployments
+    # 'default_dns_nameservers': ["8.8.8.8", "8.8.4.4", "208.67.222.222"],
 
     # Set which provider network types are supported. Only the network types
     # in this list will be available to choose from when creating a network.
-    # Network types include local, flat, vlan, gre, and vxlan.
-    'supported_provider_types': ['*'],
+    # Network types include local, flat, vlan, gre, vxlan and geneve.
+    # 'supported_provider_types': ['*'],
+
+    # You can configure available segmentation ID range per network type
+    # in your deployment.
+    # 'segmentation_id_range': {
+    #     'vlan': [1024, 2048],
+    #     'vxlan': [4094, 65536],
+    # },
+
+    # You can define additional provider network types here.
+    # 'extra_provider_types': {
+    #     'awesome_type': {
+    #         'display_name': 'Awesome New Type',
+    #         'require_physical_network': False,
+    #         'require_segmentation_id': True,
+    #     }
+    # },
 
     # Set which VNIC types are supported for port binding. Only the VNIC
     # types in this list will be available to choose from when creating a
     # port.
-    # VNIC types include 'normal', 'macvtap' and 'direct'.
+    # VNIC types include 'normal', 'direct', 'direct-physical', 'macvtap',
+    # 'baremetal' and 'virtio-forwarder'
     # Set to empty list or None to disable VNIC type selection.
-    'supported_vnic_types': ['*']
+    'supported_vnic_types': ['*'],
+
+    # Set list of available physical networks to be selected in the physical
+    # network field on the admin create network modal. If it's set to an empty
+    # list, the field will be a regular input field.
+    # e.g. ['default', 'test']
+    'physical_networks': [],
+
 }
+
+# The OPENSTACK_HEAT_STACK settings can be used to disable password
+# field required while launching the stack.
+OPENSTACK_HEAT_STACK = {
+    'enable_user_pass': True,
+}
+
 
 # The OPENSTACK_IMAGE_BACKEND settings can be used to customize features
 # in the OpenStack Dashboard related to the Image service, such as the list
@@ -307,6 +331,11 @@ IMAGE_RESERVED_CUSTOM_PROPERTIES = []
 # external to the OpenStack environment. The default is None.  This
 # value should differ from OPENSTACK_ENDPOINT_TYPE if used.
 #SECONDARY_ENDPOINT_TYPE = "publicURL"
+
+# A dictionary of default settings for create image modal.
+#CREATE_IMAGE_DEFAULTS = {
+#    'image_visibility': "public",
+#}
 
 # The number of objects (Swift containers/objects or images) to display
 # on a single page before providing a paging element (a "more" link)
@@ -395,15 +424,35 @@ LOGGING = {
     # if nothing is specified here and disable_existing_loggers is True,
     # django.db.backends will still log unless it is disabled explicitly.
     'disable_existing_loggers': False,
+    # If apache2 mod_wsgi is used to deploy OpenStack dashboard
+    # timestamp is output by mod_wsgi. If WSGI framework you use does not
+    # output timestamp for logging, add %(asctime)s in the following
+    # format definitions.
+    'formatters': {
+        'console': {
+            'format': '%(levelname)s %(name)s %(message)s'
+        },
+        'operation': {
+            # The format of "%(message)s" is defined by
+            # OPERATION_LOG_OPTIONS['format']
+            'format': '%(message)s'
+        },
+    },
     'handlers': {
         'null': {
             'level': 'DEBUG',
-            'class': 'django.utils.log.NullHandler',
+            'class': 'logging.NullHandler',
         },
         'console': {
             # Set the level to "DEBUG" for verbose output logging.
             'level': 'INFO',
             'class': 'logging.StreamHandler',
+            'formatter': 'console',
+        },
+        'operation': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'operation',
         },
     },
     'loggers': {
@@ -420,6 +469,11 @@ LOGGING = {
         'horizon': {
             'handlers': ['console'],
             'level': 'DEBUG',
+            'propagate': False,
+        },
+        'horizon.operation_log': {
+            'handlers': ['operation'],
+            'level': 'INFO',
             'propagate': False,
         },
         'openstack_dashboard': {
@@ -457,16 +511,6 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
-        'ceilometerclient': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
-        'troveclient': {
-            'handlers': ['console'],
-            'level': 'DEBUG',
-            'propagate': False,
-        },
         'swiftclient': {
             'handlers': ['console'],
             'level': 'DEBUG',
@@ -495,11 +539,10 @@ LOGGING = {
             'handlers': ['null'],
             'propagate': False,
         },
-    }
+    },
 }
 
-# 'direction' should not be specified for all_tcp/udp/icmp.
-# It is specified in the form.
+
 SECURITY_GROUP_RULES = {
     'all_tcp': {
         'name': _('All TCP'),
@@ -653,7 +696,9 @@ SECURITY_GROUP_RULES = {
 # See: https://wiki.openstack.org/wiki/Horizon/RESTAPI
 REST_API_REQUIRED_SETTINGS = ['OPENSTACK_HYPERVISOR_FEATURES',
                               'LAUNCH_INSTANCE_DEFAULTS',
-                              'OPENSTACK_IMAGE_FORMATS']
+                              'OPENSTACK_IMAGE_FORMATS',
+                              'OPENSTACK_KEYSTONE_DEFAULT_DOMAIN',
+                              'CREATE_IMAGE_DEFAULTS']
 
 # Additional settings can be made available to the client side for
 # extensibility by specifying them in REST_API_ADDITIONAL_SETTINGS
@@ -669,6 +714,8 @@ REST_API_REQUIRED_SETTINGS = ['OPENSTACK_HYPERVISOR_FEATURES',
 # For more information see:
 # http://tinyurl.com/anticlickjack
 #DISALLOW_IFRAME_EMBED = True
+
+HORIZON_CONFIG["help_url"] = "https://github.com/dietstack/dietstack"
 
 #Enables/disables upload from remote location
 IMAGES_ALLOW_LOCATION = False

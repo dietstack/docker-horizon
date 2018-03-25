@@ -23,6 +23,7 @@ KEYSTONE_HOST=${KEYSTONE_HOST:-127.0.0.1}
 MEMCACHED_SERVERS=${MEMCACHED_SERVERS:-127.0.0.1:11211}
 MULTIDOMAIN=${MULTIDOMAIN:-False}
 HORIZON_HTTP_PORT=${HORIZON_HTTP_PORT:-80}
+JUST_EXTERNAL_IP=${JUST_EXTERNAL_IP:-192.168.99.1}
 
 # check if external configs are provided
 echo "$LOG_MESSAGE Checking if external config is provided.."
@@ -42,6 +43,8 @@ for CONF in ${CONF_FILES[*]}; do
        sed -i "s/\b_MEMCACHED_SERVERS_\b/$MEMCACHED_SERVERS/" $CONF_DIR/$CONF
        sed -i "s/\b_TIME_ZONE_\b/$TIME_ZONE/" $CONF_DIR/$CONF
        sed -i "s/\b_MULTIDOMAIN_\b/$MULTIDOMAIN/" $CONF_DIR/$CONF
+       sed -i "s/\b_JUST_EXTERNAL_IP_\b/$JUST_EXTERNAL_IP/" $CONF_DIR/$CONF
+
 done
 echo "$LOG_MESSAGE  ==> done"
 

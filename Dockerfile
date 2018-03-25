@@ -7,20 +7,20 @@ COPY patches/* /patches/
 
 RUN echo 'APT::Install-Recommends "false";' >> /etc/apt/apt.conf && \
     echo 'APT::Get::Install-Suggests "false";' >> /etc/apt/apt.conf && \
-    apt update; apt install -y ca-certificates wget python libpython2.7 libxml2-dev nginx gettext && \
+    apt update; apt install -y ca-certificates wget python libpython2.7 libxml2-dev nginx gettext netbase && \
     update-ca-certificates; \
     wget --no-check-certificate https://bootstrap.pypa.io/get-pip.py; \
     python get-pip.py; \
     rm get-pip.py; \
-    wget https://raw.githubusercontent.com/openstack/requirements/stable/newton/upper-constraints.txt -P /app && \
+    wget https://raw.githubusercontent.com/openstack/requirements/stable/pike/upper-constraints.txt -P /app && \
     /patches/stretch-crypto.sh && \
     apt-get clean && apt autoremove && \
     rm -rf /var/lib/apt/lists/*; rm -rf /root/.cache
 
 # Source codes to download
 ENV SVC_NAME=horizon SVC_VERSION=10.0.5
-#ENV REPO="https://github.com/openstack/horizon" BRANCH="stable/newton" COMMIT="596ab88df9a"
-ENV RELEASE_URL=https://github.com/openstack/$SVC_NAME/archive/$SVC_VERSION.tar.gz
+ENV REPO="https://github.com/openstack/horizon" BRANCH="stable/pike" COMMIT="39d863e"
+#ENV RELEASE_URL=https://github.com/openstack/$SVC_NAME/archive/$SVC_VERSION.tar.gz
 
 # Install nova with dependencies
 ENV BUILD_PACKAGES="git build-essential libssl-dev libffi-dev python-dev"
