@@ -30,7 +30,7 @@ WEBROOT = '/'
 # with the list of host/domain names that the application can serve.
 # For more information see:
 # https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
-ALLOWED_HOSTS = ['_JUST_EXTERNAL_IP_', ]
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '_JUST_EXTERNAL_IP_', ]
 
 # Set SSL proxy settings:
 # For Django 1.4+ pass this header from the proxy after terminating the SSL,
